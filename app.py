@@ -2,6 +2,10 @@ import streamlit as st
 import streamlit.components.v1 as components
 import json
 
+if 'gender_preference' not in st.session_state:
+    st.session_state.gender_preference = "Both"
+
+# Full Profile List
 profiles = [
     {
         "id": 1,
@@ -157,25 +161,13 @@ profiles = [
         "age": 38,
         "profession": "Actor",
         "interests": ["Fitness", "Motorbikes", "Nature Retreats"],
-        "gallery": ["https://i.pinimg.com/736x/a2/03/f0/a203f00bafe49cbee77e453fdef354d5.jpg","https://i.pinimg.com/736x/84/4a/95/844a951999ba5f31e643033583646877.jpg"],
+        "gallery": ["https://studybymind.com/wp-content/uploads/2022/06/Yash-KGF-Actor-Biography-2.jpg","https://i.pinimg.com/736x/84/4a/95/844a951999ba5f31e643033583646877.jpg"],
         "hasLikedYou": True
     }
+
 ]
 
-# Initialize session state
-if 'gender_preference' not in st.session_state:
-    st.session_state.gender_preference = "Both"
-if 'matches' not in st.session_state:
-    st.session_state.matches = []
-if 'all_viewed' not in st.session_state:
-    st.session_state.all_viewed = False
-if 'current_index' not in st.session_state:
-    st.session_state.current_index = 0
-if 'current_image_index' not in st.session_state:
-    st.session_state.current_image_index = 0
 
-st.set_page_config(page_title="SaSu - Matchmaking App", layout="centered")
-# Gender mapping
 gender_map = {
     "Ram Charan": "Boy",
     "Prabhas": "Boy",
@@ -196,195 +188,353 @@ gender_map = {
     "Kiara Advani": "Girl"
 }
 
-# Filter profiles based on gender preference
-def get_filtered_profiles():
-    if st.session_state.gender_preference == "Boy":
-        return [p for p in profiles if gender_map.get(p["name"], "") == "Boy"]
-    elif st.session_state.gender_preference == "Girl":
-        return [p for p in profiles if gender_map.get(p["name"], "") == "Girl"]
-    return profiles
+if st.session_state.gender_preference == "Boy":
+    filtered_profiles = [p for p in profiles if gender_map.get(p["name"], "") == "Boy"]
+elif st.session_state.gender_preference == "Girl":
+    filtered_profiles = [p for p in profiles if gender_map.get(p["name"], "") == "Girl"]
+else:
+    filtered_profiles = profiles
 
-# UI Components
+js_profiles = json.dumps(filtered_profiles)
+
+# App UI
+st.set_page_config(page_title="SaSu - Matchmaking App", layout="centered")
 st.markdown("""
-<style>
-    .profile-image {
-        width: 100%;
-        max-height: 400px;
-        object-fit: contain;
-        margin: 0 auto;
-        display: block;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    <h1 style="text-align:center; color:#6a1b9a;">SaSu – Because Mom Knows Best</h1>
+    <style>
+    .stButton > button {
+        transition: all 0.3s ease;
+        border: 2px solid #6a1b9a !important;
+        color: #6a1b9a !important;
+        background-color: white !important;
     }
-    
-    .gender-buttons {
-        display: flex;
-        justify-content: center;
-        gap: 10px;
-        margin-bottom: 15px;
+    .stButton > button:focus {
+        background-color: #6a1b9a !important;
+        color: white !important;
     }
-    
-    .action-section {
-        position: sticky;
-        bottom: 0;
-        background: white;
-        padding: 15px 0;
-        border-top: 1px solid #f0f0f0;
-        margin-top: 20px;
-    }
-    
-    .gallery-dots {
-        display: flex;
-        justify-content: center;
-        margin: 10px 0;
-    }
-    .dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: #ccc;
-        margin: 0 5px;
-    }
-    .dot.active {
-        background: #6a1b9a;
-    }
-    
-    .profile-info {
-        margin: 15px 0;
-    }
-</style>
+    </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<h1 style="text-align:center; color:#6a1b9a; margin-bottom: 20px;">SaSu – Because Mom Knows Best</h1>', 
-            unsafe_allow_html=True)
-
-# Gender selection - buttons closer together
-st.markdown('<div class="gender-buttons">', unsafe_allow_html=True)
-col1, col2, col3 = st.columns([1,1,1])
-with col1: 
-    if st.button("👦 Boys"):
-        st.session_state.update({
-            "gender_preference": "Boy",
-            "all_viewed": False,
-            "matches": [],
-            "current_index": 0,
-            "current_image_index": 0
-        })
-        st.rerun()
-with col2: 
-    if st.button("👧 Girls"):
-        st.session_state.update({
-            "gender_preference": "Girl",
-            "all_viewed": False,
-            "matches": [],
-            "current_index": 0,
-            "current_image_index": 0
-        })
-        st.rerun()
-with col3: 
-    if st.button("🤝 Both"):
-        st.session_state.update({
-            "gender_preference": "Both",
-            "all_viewed": False,
-            "matches": [],
-            "current_index": 0,
-            "current_image_index": 0
-        })
-        st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
+# Gender selection buttons
+col1, col2, col3 = st.columns(3)
+with col1: st.button("👦 Boy", on_click=lambda: st.session_state.update(gender_preference="Boy"))
+with col2: st.button("👧 Girl", on_click=lambda: st.session_state.update(gender_preference="Girl"))
+with col3: st.button("🤝 Both", on_click=lambda: st.session_state.update(gender_preference="Both"))
 
 st.markdown(f"<p style='text-align:center; color:#6a1b9a;'>Current selection: {st.session_state.gender_preference}</p>", 
             unsafe_allow_html=True)
 
-# Get filtered profiles
-filtered_profiles = get_filtered_profiles()
+# HTML Component
+components.html(f"""
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+body {{
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f5;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}}
 
-# Main profile display
-if st.session_state.all_viewed:
-    st.subheader("🌟 Potential Matches")
-    if not st.session_state.matches:
-        st.write("No matches found yet. Keep trying!")
-    else:
-        st.write("These families have shown interest in your child:")
-        cols = st.columns(3)
-        for idx, match in enumerate(st.session_state.matches):
-            with cols[idx % 3]:
-                st.image(match['gallery'][0], use_container_width=True)
-                st.markdown(f"""
-                **{match['name']}, {match['age']}**  
-                *{match['profession']}*  
-                Interests: {", ".join(match['interests'])}
-                """)
-    if st.button("Start Over"):
-        st.session_state.update({
-            "all_viewed": False,
-            "matches": [],
-            "current_index": 0,
-            "current_image_index": 0
-        })
-        st.rerun()
-else:
-    if st.session_state.current_index >= len(filtered_profiles):
-        st.session_state.all_viewed = True
-        st.rerun()
-    
-    current_profile = filtered_profiles[st.session_state.current_index]
-    
-    # Perfectly sized profile image
-    st.markdown(f"""
-    <img src="{current_profile['gallery'][st.session_state.current_image_index]}" 
-         class="profile-image" 
-         alt="{current_profile['name']}'s profile photo">
-    """, unsafe_allow_html=True)
-    
-    # Gallery dots
-    dots_html = "<div class='gallery-dots'>"
-    for i in range(len(current_profile['gallery'])):
-        active = "active" if i == st.session_state.current_image_index else ""
-        dots_html += f"<span class='dot {active}'></span>"
-    dots_html += "</div>"
-    st.markdown(dots_html, unsafe_allow_html=True)
-    
-    # Profile info
-    st.markdown(f"""
-    <div class="profile-info">
-        <h3>{current_profile['name']}, {current_profile['age']}</h3>
-        <p><em>{current_profile['profession']}</em></p>
-        <p><strong>Interests:</strong> {", ".join(current_profile['interests'])}</p>
+.wrapper {{
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+}}
+
+.profile-card {{
+    width: 350px;
+    border-radius: 15px;
+    background: #fff;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    overflow: hidden;
+    margin: 0 auto;
+}}
+
+.gallery-container {{
+    position: relative;
+    height: 400px;
+    overflow: visible;  /* CHANGED FROM hidden */
+}}
+
+.gallery-image {{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.3s;
+}}
+
+.navigation-arrows {{
+    position: absolute;
+    top: 50%;
+    width: 100%;
+    transform: translateY(-50%);
+    display: flex;
+    justify-content: space-between;
+    padding: 0 15px;
+    box-sizing: border-box; /* Crucial fix */
+}}
+
+.arrow {{
+    font-family: Arial, sans-serif; /* Better symbol rendering */
+    font-size: 28px; /* Larger size */
+    padding-bottom: 3px; /* Visual alignment */
+}}
+
+
+.dots-container {{
+    position: absolute;
+    bottom: 15px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    z-index: 2;
+}}
+
+.dot {{
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.5);
+    cursor: pointer;
+    transition: all 0.3s;
+}}
+
+.dot.active {{
+    background: white;
+    transform: scale(1.2);
+}}
+
+.profile-info {{
+    padding: 20px;
+    text-align: center;
+}}
+
+.profile-info h2 {{
+    margin: 0;
+    color: #6a1b9a;
+}}
+
+.profile-info p {{
+    margin: 5px 0 15px 0;
+    color: #444;
+}}
+
+.interests {{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+}}
+
+.interest-tag {{
+    background-color: #ba68c8;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+}}
+
+.buttons {{
+    text-align: center;
+    margin: 15px 0;
+}}
+
+button {{
+    font-size: 30px;
+    background: none;
+    border: none;
+    margin: 0 25px;
+    cursor: pointer;
+}}
+
+.match {{
+    display: none;
+    text-align: center;
+    font-size: 18px;
+    background: #c8e6c9;
+    padding: 10px;
+    margin: 10px 20px;
+    border-radius: 12px;
+    font-weight: bold;
+    color: #2e7d32;
+}}
+.end-screen {{
+    width: 100%;
+    height: 100%;
+    padding: 20px;
+    text-align: center;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+}}
+
+.matches-container {{
+    width: 100%;
+    height: 80vh;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}}
+
+.match-profile {{
+    width: 250px;
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    margin: 10px;
+    flex-shrink: 0;
+}}
+
+.match-profile img {{
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}}
+                
+
+</style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="profile-card">
+            <div class="gallery-container">
+                <div class="navigation-arrows">
+                    <div class="arrow" onclick="previousImage()">‹</div>
+                    <div class="arrow" onclick="nextImage()">›</div>
+                </div>
+                <div class="dots-container" id="dots-container"></div>
+                <img class="gallery-image" id="current-image" src="">
+            </div>
+            <div class="profile-info">
+                <h2 id="profile-name"></h2>
+                <p id="profile-profession"></p>
+                <div class="interests" id="profile-interests"></div>
+            </div>
+            <div class="buttons">
+                <button onclick="handleDislike()">👎</button>
+                <button onclick="handleLike()">❤️</button>
+            </div>
+            <div class="match" id="match">🎉 It's a Match!</div>
+        </div>
+        <div class="end-screen" id="end-screen">
+            <h2 style="color:#6a1b9a; margin-bottom: 30px;">🌟 Potential Matches 🌟</h2>
+            <div class="matches-container" id="mutual-matches"></div>
+        </div>
     </div>
-    """, unsafe_allow_html=True)
+
+<script>
+const profiles = {js_profiles};
+let currentIndex = 0;
+let currentImageIndex = 0;
+let viewedProfiles = new Set();
+let userLikes = [];
+
+function updateGallery() {{
+    const profile = profiles[currentIndex];
+    document.getElementById('current-image').src = profile.gallery[currentImageIndex];
     
-    # Photo navigation
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("← Previous Photo", use_container_width=True):
-            st.session_state.current_image_index = (
-                st.session_state.current_image_index - 1) % len(current_profile['gallery'])
-            st.rerun()
-    with col2:
-        if st.button("Next Photo →", use_container_width=True):
-            st.session_state.current_image_index = (
-                st.session_state.current_image_index + 1) % len(current_profile['gallery'])
-            st.rerun()
+    const dotsContainer = document.getElementById('dots-container');
+    dotsContainer.innerHTML = profile.gallery.map((_, i) => 
+        `<div class="dot ${{i === currentImageIndex ? 'active' : ''}}" 
+              onclick="changeImage(${{i}})"></div>`
+    ).join('');
+}}
+
+function loadProfile() {{
+    currentImageIndex = 0;
+    const profile = profiles[currentIndex];
     
-    # Action buttons - perfectly positioned
-    st.markdown('<div class="action-section">', unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("✖ Not Interested", use_container_width=True):
-            st.session_state.current_index += 1
-            st.session_state.current_image_index = 0
-            if st.session_state.current_index >= len(filtered_profiles):
-                st.session_state.all_viewed = True
-            st.rerun()
-    with col2:
-        if st.button("❤ Interested", use_container_width=True, type="primary"):
-            if current_profile['hasLikedYou']:
-                st.session_state.matches.append(current_profile)
-                st.success(f"Potential match! The family of {current_profile['name']} is also interested!")
-            st.session_state.current_index += 1
-            st.session_state.current_image_index = 0
-            if st.session_state.current_index >= len(filtered_profiles):
-                st.session_state.all_viewed = True
-            st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+    document.getElementById('current-image').src = profile.gallery[0];
+    document.getElementById('profile-name').textContent = profile.name + ', ' + profile.age;
+    document.getElementById('profile-profession').textContent = profile.profession;
+    
+    document.getElementById('profile-interests').innerHTML = 
+        profile.interests.map(i => `<span class="interest-tag">${{i}}</span>`).join('');
+    
+    document.getElementById('match').style.display = 'none';
+    updateGallery();
+}}
+
+function nextImage() {{
+    currentImageIndex = (currentImageIndex + 1) % profiles[currentIndex].gallery.length;
+    updateGallery();
+}}
+
+function previousImage() {{
+    currentImageIndex = (currentImageIndex - 1 + profiles[currentIndex].gallery.length) % 
+                       profiles[currentIndex].gallery.length;
+    updateGallery();
+}}
+
+function changeImage(index) {{
+    currentImageIndex = index;
+    updateGallery();
+}}
+
+function handleLike() {{
+    const profile = profiles[currentIndex];
+    viewedProfiles.add(profile.id);
+    userLikes.push(profile.id);
+    
+    if(profile.hasLikedYou) {{
+        document.getElementById('match').style.display = 'block';
+    }}
+    currentIndex = (currentIndex + 1) % profiles.length;
+    setTimeout(() => {{
+        loadProfile();
+        checkEnd();
+    }}, 600);
+}}
+
+function handleDislike() {{
+    const profile = profiles[currentIndex];
+    viewedProfiles.add(profile.id);
+    currentIndex = (currentIndex + 1) % profiles.length;
+    loadProfile();
+    checkEnd();
+}}
+function checkEnd() {{
+    if (viewedProfiles.size >= profiles.length) {{
+        document.querySelector('.profile-card').style.display = 'none';
+        document.getElementById('end-screen').style.display = 'block';
+        showMutualMatches();
+    }}
+}}
+
+function showMutualMatches() {{
+    const mutualMatches = profiles.filter(p => 
+        p.hasLikedYou && userLikes.includes(p.id)
+    );
+    
+    const container = document.getElementById('mutual-matches');
+    container.innerHTML = mutualMatches.map(p => `
+        <div class="match-profile">
+            <img src="${{p.gallery[0]}}">
+            <h3>${{p.name}}, ${{p.age}}</h3>
+            <p>${{p.profession}}</p>
+            <div class="interests" style="margin-top: 10px;">
+                ${{p.interests.map(i => `<span class="interest-tag">${{i}}</span>`).join('')}}
+            </div>
+        </div>
+    `).join('');
+}}
+
+loadProfile();
+</script>
+</body>
+</html>
+""", height=780, scrolling=False)
